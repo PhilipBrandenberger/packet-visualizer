@@ -119,7 +119,7 @@ class GUI:
                         text="Enable Clusters", 
                         variable=self.enable_clustering_var
                         ).pack(side='left', padx=5)
-        # silder
+        # slider
         ttk.Label(self.control_frame, text="Threshold:").pack(side='left')
         self.cluster_threshold_var = tk.DoubleVar(value=0.1)
         threshold_scale = ttk.Scale(self.control_frame, 
@@ -434,23 +434,14 @@ class GUI:
     
     def highlight_node(self, node):
         """Highlight the selected node in the graph without redrawing entire graph"""
-        
-        # Don't call update_graph() here, which recalculates layouts and causes jumping
-        # Just use the current graph state
-        
-        # Clear any previous highlights first (optional)
         self.ax.clear()
-        
-        # Get working graph
+
         working_graph = self.working_graph if hasattr(self, 'working_graph') and self.working_graph else self.G
-        
-        # Redraw with current positions, not recalculating layout
-        # Draw normal nodes first
+
         all_nodes = list(working_graph.nodes())
         highlight_nodes = [node]
         normal_nodes = [n for n in all_nodes if n != node]
         
-        # Get node sizes and colors as in update_graph
         node_colors = []
         node_sizes = []
         
@@ -473,7 +464,7 @@ class GUI:
             else:
                 node_sizes.append(700)
         
-        # Draw normal nodes
+        # draw normal nodes
         nx.draw_networkx_nodes(
             working_graph,
             self.pos,
@@ -485,7 +476,7 @@ class GUI:
             ax=self.ax
         )
         
-        # Draw edges
+        # draw edges
         edge_width_by = self.edge_width_var.get()
         protocol_colors = {
             "TCP": "blue",
@@ -501,7 +492,7 @@ class GUI:
             "UNKNOWN": "gray"
         }
         
-        # Draw all edges with their protocol colors, similar to update_graph
+        # draw all edges with their protocol colors
         for protocol, color in protocol_colors.items():
             edges_of_protocol = [(u, v) for u, v, d in working_graph.edges(data=True) if protocol in d.get("protocols", {})]
             
@@ -523,7 +514,7 @@ class GUI:
                     ax=self.ax,
                 )
         
-        # Draw highlighted node on top
+        # draw highlighted node on top
         nx.draw_networkx_nodes(
             working_graph,
             self.pos,
@@ -535,7 +526,7 @@ class GUI:
             ax=self.ax
         )
         
-        # Highlight connected edges
+        # highlight connected edges
         connected_edges = list(working_graph.edges(node))
         if connected_edges:
             nx.draw_networkx_edges(
@@ -548,7 +539,7 @@ class GUI:
                 ax=self.ax
             )
         
-        # Add labels if enabled
+        # add labels
         if self.label_var.get():
             labels = {}
             for n in working_graph.nodes():
@@ -567,7 +558,7 @@ class GUI:
                 ax=self.ax,
             )
         
-        # Restore legend if needed
+        # refreshes legend
         if self.legend_var.get():
             legend_elements = []
             for protocol, color in protocol_colors.items():
@@ -665,7 +656,6 @@ class GUI:
     
     def update_payload_view(self, event=None):
         """Updates the payload view when packet ID or view type changes"""
-        # Get the selected node and packet ID
         if not hasattr(self, 'selected_node') or not self.selected_node:
             return
             
@@ -678,46 +668,46 @@ class GUI:
         except ValueError:
             return
             
-        # Find the payload data
+        # find the payload data
         working_graph = self.working_graph if hasattr(self, 'working_graph') and self.working_graph else self.G
         
-        # Clear the text area
+        # clear the text area
         self.payload_text.delete(1.0, tk.END)
         
         payload_found = False
         
-        # Check outgoing connections
+        # check outgoing connections
         for edge in working_graph.edges(self.selected_node, data=True):
             src, dst, edge_data = edge
             if "payloads" in edge_data:
                 for payload in edge_data["payloads"]:
                     if payload.get("packet_id") == packet_id:
                         view_type = self.payload_view_var.get()
-                        self._display_payload(payload, view_type)
+                        self.display_payload(payload, view_type)
                         payload_found = True
                         break
             if payload_found:
                 break
         
-        # If not found in outgoing, check incoming
+        # outgoing payload
         if not payload_found:
             for src, dst, edge_data in working_graph.in_edges(self.selected_node, data=True):
                 if "payloads" in edge_data:
                     for payload in edge_data["payloads"]:
                         if payload.get("packet_id") == packet_id:
                             view_type = self.payload_view_var.get()
-                            self._display_payload(payload, view_type)
+                            self.display_payload(payload, view_type)
                             break
 
-    def _display_payload(self, payload_data, view_type):
-        """Displays payload data in specified format"""
+    def display_payload(self, payload_data, view_type):
+        """shows payload data formatted """
         self.payload_text.delete(1.0, tk.END)
         
         if not payload_data:
             self.payload_text.insert(tk.END, "No payload data available")
             return
             
-        # Add metadata
+        # metadata
         metadata = f"Packet ID: {payload_data.get('packet_id')}\n"
         metadata += f"Protocol: {payload_data.get('protocol')}\n"
         metadata += f"Size: {payload_data.get('size')} bytes\n"
@@ -726,15 +716,15 @@ class GUI:
         
         self.payload_text.insert(tk.END, metadata)
         
-        # Format based on view type
+        #  based on view type
         if view_type == "Hex" or view_type == "Both":
             hex_data = payload_data.get("hex", "")
             if hex_data:
-                # Format hex data in groups of 2 chars with spaces
+                # groups of 2 chars with spaces
                 formatted_hex = ""
                 for i in range(0, len(hex_data), 2):
                     formatted_hex += hex_data[i:i+2] + " "
-                    # Add line break every 16 bytes (32 hex chars)
+                    # line break every 16 bytes
                     if (i+2) % 32 == 0:
                         formatted_hex += "\n"
                 

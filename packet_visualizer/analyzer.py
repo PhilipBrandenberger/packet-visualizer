@@ -213,7 +213,7 @@ class packet_analyzer:
                         is_server=False,
                         mac=packet["src_mac"],
                         ip=packet["src_ip"],
-                        connections=[]  # Add this for tracking connections
+                        connections=[],
                     )
 
                 if not G.has_node(dst):
@@ -226,7 +226,7 @@ class packet_analyzer:
                         is_server=False,
                         mac=packet["dst_mac"],
                         ip=packet["dst_ip"],
-                        connections=[]  # Add this for tracking connections
+                        connections=[],
                     )
 
                 #update properties
@@ -242,10 +242,10 @@ class packet_analyzer:
                     "packet_count": 1,
                     "total_bytes": packet["packet_size"],
                     "timestamp": packet["timestamp"],
-                    "packet_id": packet["id"]
+                    "packet_id": packet["id"],
                 }
                 
-                # Add the connection or update if exists
+                # add/update connection 
                 existing_conn = next((c for c in G.nodes[src].get("connections", []) if c["target"] == dst and c["protocol"] == protocol), None)
                 if existing_conn:
                     existing_conn["packet_count"] += 1
@@ -280,7 +280,7 @@ class packet_analyzer:
                         G[src][dst]["packet_ids"] = []
                     G[src][dst]["packet_ids"].append(packet["id"])
                     
-                    # Store payload information 
+                    # store payload  
                     if "payloads" not in G[src][dst]:
                         G[src][dst]["payloads"] = []
                     
@@ -291,7 +291,7 @@ class packet_analyzer:
                             "ascii": packet.get("payload_ascii"),
                             "protocol": protocol,
                             "timestamp": packet["timestamp"],
-                            "size": len(packet.get("payload", b''))
+                            "size": len(packet.get("payload", b'')),
                         }
                         G[src][dst]["payloads"].append(payload_entry)
                 else:
@@ -302,10 +302,10 @@ class packet_analyzer:
                         "src_ports": set([packet.get("src_port")]) if packet.get("src_port") else set(),
                         "dst_ports": set([packet.get("dst_port")]) if packet.get("dst_port") else set(),
                         "packet_ids": [packet["id"]],
-                        "payloads": []
+                        "payloads": [],
                     }
                     
-                    # Add payload if available
+                    # payload if available
                     if packet.get("payload") is not None:
                         payload_entry = {
                             "packet_id": packet["id"],
@@ -484,7 +484,7 @@ class packet_analyzer:
 
             packet_sizes.append(packet["packet_size"])
 
-        # Calculate stats
+        # calculate stats
         stats["total_packets"] = total_packets
         stats["unique_ips"] = len(unique_ips)
         stats["avg_size"] = sum(packet_sizes) / len(packet_sizes) if packet_sizes else 0
@@ -493,7 +493,6 @@ class packet_analyzer:
         stats["protocols"] = dict(protocols)
         
         return stats
-
 
 
 def find_cluster(node,clusters):
